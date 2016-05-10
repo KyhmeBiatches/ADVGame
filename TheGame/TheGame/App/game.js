@@ -1,6 +1,6 @@
 var main = main || {};
 //set up size on csreen      X    Y
-main.game = new Phaser.Game(800, 600, Phaser.AUTO,'');
+main.game = new Phaser.Game(1080, 720, Phaser.AUTO,'');
 //add states
 main.game.state.add('Preload', preload);
 main.game.state.add('Menu', menu);
