@@ -14,7 +14,7 @@ preload.prototype = {
         //Load all needed assets
             //Loading everything for the menu
                 //Loading images
-        this.load.image('MenuBackground', 'App/assets/menu-background.jpg');
+        this.load.image('MenuBackground', '/App/assets/menu-background.jpg');
         this.load.image('MenuStartButton', 'App/assets/Menu_Red_03.png');
         this.load.image('MenuContinueButton', 'App/assets/Menu_Red_01.png');
         this.load.image('MenuPauseButton', 'App/assets/Menu_Red_04.png');
