@@ -224,6 +224,7 @@
     <Content Include="App\assets\sounds\menu\start_game_sound.wav" />
     <Content Include="App\game.js" />
     <Content Include="App\src\City\cityState.js" />
+    <Content Include="App\src\Fight\fightSate.js" />
     <Content Include="App\src\Menu\menuState.js" />
     <Content Include="App\src\Preload\preloadState.js" />
     <Content Include="Content\bootstrap.css" />
