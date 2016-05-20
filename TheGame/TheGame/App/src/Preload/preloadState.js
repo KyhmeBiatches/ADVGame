@@ -29,6 +29,9 @@ preload.prototype = {
         this.load.image('player-back', '/App/assets/player/back-view-char.png');
         this.load.image('player-right', '/App/assets/player/right-view-char.png');
         this.load.image('player-left', '/App/assets/player/left-view-char.png');
+
+        //Loading everything for the city
+        this.game.load.image('map', '/App/assets/map.jpg');
     },
     create: function() {
         this.state.start('Menu');
