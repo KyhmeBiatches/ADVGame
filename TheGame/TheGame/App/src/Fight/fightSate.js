@@ -12,7 +12,7 @@ fight.prototype = {
         //Loads the arena/background
         this.load.image('arena-' + number, 'App/assets/fighting/arenas/arena' + number + '.png');
         //load enemy
-        this.load.spriteSheet('enemy' + number, 'App/assets/fighting/enemy/enemy-' + number + '.png', 480, 550);
+        this.game.load.spritesheet('enemy' + number, 'App/assets/fighting/enemy/enemy-' + number + '.png', 480, 550);
         this.load.image('enemy' + number + 'bullet', 'App/assets/fighting/enemy/enemy-' + number + 'projectile.png')
         
     },
