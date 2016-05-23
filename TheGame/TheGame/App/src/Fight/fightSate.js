@@ -7,8 +7,12 @@ var cursors;
 var player;
 var number;
 
+var playerHp;
+
 var enemy;
 
+var fightIsActive;
+var status;
 
 var backgroundGroup;
 var mainGroup;
@@ -50,6 +54,13 @@ fight.prototype = {
         backgroundGroup.add(background);
         //background.sacle.set(0);
 
+        //Setup player HP;
+        playerHp = 5;
+
+        //Set the fight to being active
+        fightIsActive = true;
+        status = 'ACTIVE';
+
         //Create player sprite
         player = this.game.add.sprite(80, 600, 'playerspritesheet');
         player.frame = 8;
@@ -65,6 +76,9 @@ fight.prototype = {
         //Physics 
         this.game.physics.startSystem(Phaser.Physics.P2JS);
         this.game.physics.p2.gravity.y = 1800;
+
+        //  Turn on impact events for the world, without this we get no collision callbacks
+        this.game.physics.p2.setImpactEvents(true);
 
         //Setup player portrait
         var playerportrait = this.game.add.sprite(0, 10, 'playerportrait');
@@ -111,7 +125,7 @@ fight.prototype = {
         enemy.body.clearShapes();
         enemy.body.addRectangle(210, 460, 10, 0);
         enemy.body.setCollisionGroup(this.enemyCollisionGroup);
-        enemy.body.collides(this.playerCollisionGroup);
+        
 
         //Player physics debug and hitbox
         //player.body.debug = true;
@@ -119,7 +133,10 @@ fight.prototype = {
         player.body.addRectangle(70, 180, 15, -20);
         player.body.fixedRotation = true;
         player.body.setCollisionGroup(this.playerCollisionGroup);
+
+        //Tell sprites to collide with collision group
         player.body.collides(this.enemyCollisionGroup);
+        enemy.body.collides(this.playerCollisionGroup);
         
 
         //Controls
@@ -130,40 +147,48 @@ fight.prototype = {
         this.rightKey = this.game.input.keyboard.addKey(Phaser.Keyboard.D);
         this.leftKey = this.game.input.keyboard.addKey(Phaser.Keyboard.A);
     },
-    update: function() {
-        if (this.rightKey.isDown) {
-            if (player.animations.name != walkRightAnimation) {
-                player.frame = 0;
-                player.animations.play(walkRightAnimation, 12, true);
+    update: function () {
+        //Wraped everything in fightIsActive so we are able to stop the fight when its won or lost
+        if (fightIsActive) {
+            if (this.rightKey.isDown) {
+                if (player.animations.name != walkRightAnimation) {
+                    player.frame = 0;
+                    player.animations.play(walkRightAnimation, 12, true);
+                }
+                player.body.velocity.x = 200;
+            } else if (this.leftKey.isDown) {
+                player.body.velocity.x = -200;
+                player.animations.play(walkLeftAnimation, 12, true);
+            } else {
+                player.body.velocity.x = 0;
+                player.animations.play('none');
             }
-            player.body.velocity.x = 200;
-        }
-        else if (this.leftKey.isDown) {
-            player.body.velocity.x = -200;
-            player.animations.play(walkLeftAnimation, 12, true);
-        } else {
-            player.body.velocity.x = 0;
-            player.animations.play('none');
-        }
 
-        if (this.upKey.isDown) {
-            player.body.moveUp(700);
-        }
-        else if (this.downKey.isDown) {
-            
-        }
+            if (this.upKey.isDown) {
+                player.body.moveUp(700);
+            } else if (this.downKey.isDown) {
 
-        if (cursors.left.isDown) {
-            enemy.body.velocity.x = -100;
-        }
-        else if (cursors.right.isDown) {
-            enemy.body.velocity.x = 100;
-        } else {
-            enemy.body.velocity.x = 0;
-        }
+            }
 
-        if (cursors.down.isDown) {
-            this.enemyFire();
+            if (cursors.left.isDown) {
+                enemy.body.velocity.x = -100;
+            } else if (cursors.right.isDown) {
+                enemy.body.velocity.x = 100;
+            } else {
+                enemy.body.velocity.x = 0;
+            }
+
+            if (cursors.down.isDown) {
+                this.enemyFire();
+            }
+
+            this.bullets.forEachExists(function(bullet) {
+
+                if (bullet.y < 0 || bullet.x < 0) {
+                    console.log(bullet.x + " " + bullet.y);
+                    bullet.destroy();
+                }
+            }, this);
         }
     },
 
@@ -176,29 +201,110 @@ fight.prototype = {
 
             if (bullet) {
                 this.game.physics.p2.enable(bullet);
-                bullet.reset(enemy.x - 180, enemy.y - 20);
+                bullet.reset(enemy.x , enemy.y - 200);
 
                 this.nextEnemyFire = this.game.time.now + 1200;
-
-                bullet.body.setCollisionGroup(this.enemyCollisionGroup);
+                mainGroup.add(bullet);
                 bullet.body.clearShapes();
-                bullet.body.addRectangle(18, 18, 137, -14);
+                bullet.body.addRectangle(18, 18, -10, 138);
                 bullet.body.velocity.x = 500 * Math.cos(angle);
                 bullet.body.velocity.y = 500 * Math.sin(angle);
-                bullet.rotation = angle + 1.58;
                 bullet.body.fixedRotation = true;
                 bullet.body.data.gravityScale = 0;
                 bullet.body.allowGravity = false;
 
-                //bullet.body.debug = true;
-                //bullet.body.collides(this.playerCollisionGroup);
-                //console.log(bullet.body.collidesWith);
+                
+                bullet.body.setCollisionGroup(this.enemyCollisionGroup);
+                bullet.body.removeCollisionGroup(this.enemyCollisionGroup);
+                bullet.body.collides(this.playerCollisionGroup, this.playerHit, this);
+
 
             }
         }
     },
 
-    playerHit: function() {
-        console.log("HIT");
+    playerHit: function (bullet) {
+        bullet.sprite.destroy();
+        playerHp -= 1;
+        if (playerHp === 0) {
+            this.playerLost();
+        }
+        console.log(playerHp);
+    },
+
+    playerLost: function() {
+        console.log('Player LOST');
+        status = 'DEFEAT';
+        fightIsActive = false;
+        this.drawStatusScreen();
+        player.animations.play('none');
+    },
+
+    playerWon: function() {
+        console.log('Player WON');
+        status = 'WON';
+        fightIsActive = false;
+        drawStatusScreen();
+    },
+
+    drawStatusScreen: function () {
+        var continueBtn;
+        var backgroundBitmap = this.game.add.bitmapData(this.game.width / 2, this.game.height / 2);
+        backgroundBitmap.context.fillStyle = '#999999';
+        backgroundBitmap.context.fillRect(0, 0, this.game.width / 2, this.game.height / 2);
+        var background = this.game.add.sprite(this.game.width / 2, this.game.height / 2, backgroundBitmap);
+        background.anchor.set(0.5);
+        UIGroup.add(background);
+
+        var statusText = this.game.make.text(background.x, background.y - background.height / 2 + 50, status, { font: 'Bold 50px Arial', fill: '#ffffff' });
+        statusText.anchor.set(0.5);
+        UIGroup.add(statusText);
+
+
+        if (status === 'DEFEAT') {
+            var enemyTaunt = 'You aint strong enough human!';
+            var enemyDefeatText = this.game.make.text(background.x, background.y - background.height / 2 + 150, enemyTaunt, { font: 'Bold 22px Arial', fill: '#ffffff' });
+            enemyDefeatText.anchor.set(0.5);
+            UIGroup.add(enemyDefeatText);
+
+            var quitBtn = this.game.add.button(background.x, background.y + 130, 'MenuQuitButton', this.quitAfterLoose, this);
+            quitBtn.events.onInputOver.add(this.mouseOver, this);
+            quitBtn.events.onInputOut.add(this.mouseOut, this);
+            quitBtn.anchor.set(0.5);
+            UIGroup.add(quitBtn);
+            continueBtn = this.game.add.button(background.x, background.y + 80, 'MenuContinueButton', this.retry, this);
+        }
+
+        else if (status === 'WON') {
+            continueBtn = this.game.add.button(background.x, background.y + 120, 'MenuContinueButton', this.continueAfterFight, this);
+        }
+
+        continueBtn.events.onInputOver.add(this.mouseOver, this);
+        continueBtn.events.onInputOut.add(this.mouseOut, this);
+        continueBtn.anchor.set(0.5);
+        UIGroup.add(continueBtn);
+    },
+
+    continueAfterFight: function() {
+        
+    },
+
+    quitAfterLoose: function() {
+        
+    },
+
+    retry: function() {
+        this.game.state.start('Fight');
+    },
+
+    mouseOver: function (button) {
+        this.game.sound.play('MouseOver');
+        button.scale.set(1.1, 1.1);
+    },
+
+    mouseOut: function (button) {
+        button.scale.set(1, 1);
     }
+
+
 }
