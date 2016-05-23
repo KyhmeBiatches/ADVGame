@@ -27,20 +27,36 @@ city.prototype = {
         var doorCollisionGroup = this.game.physics.p2.createCollisionGroup();
 
         //Setting up the background
-        this.game.add.tileSprite(0, 0, 1080, 720, 'map');
+        this.game.add.tileSprite(0, 0, 3240, 5760, 'map');
+
+        this.game.world.setBounds(0, 0, 3240, 5760);
 
         //creating player
-        playerSprite = this.game.add.sprite(50, 300, 'player-front');
-        playerSprite.scale.setTo(0.2, 0.2);
-        playerSprite.smoothed = false;
+        //playerSprite = this.game.add.sprite(50, 300, 'player-front');
+        //playerSprite.scale.setTo(0.4, 0.4);
+        //playerSprite.smoothed = false;
+
+        animaRight = this.game.add.sprite(100, 100, 'player-right');
+        animaRight.frame = 20;
+        animaLeft = this.game.add.sprite(0, 0, 'player-left');
+        animaLeft.frame = 20;
 
         //player for PLayer model
-        player = new this.Player(playerSprite);
+        player = new this.Player(animaRight);
 
         //Enable body
-        this.game.physics.p2.enable(playerSprite, true);
-        playerSprite.body.setRectangle(40, 60, 0, 0);
+      /*  this.game.physics.p2.enable(playerSprite, true);
+        playerSprite.body.setRectangle(80, 120, 0, 0);
         playerSprite.body.fixedRotation = true;
+        playerSprite.body.collideWorldBounds = true;
+        */
+        animaRight.animations.add('right', [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]);
+        animaLeft.animations.add('left', [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]);
+        this.game.physics.p2.enable(animaRight, true);
+        animaRight.scale.setTo(0.4, 0.4);
+        animaRight.smoothed = false;
+        animaRight.body.collideWorldBounds = true;
+        animaRight.body.setRectangle(80, 120, 0, 0);
 
         //creating doors to a group
         var doors = this.game.add.group();
@@ -53,21 +69,22 @@ city.prototype = {
         door.body.debug = false;
         door.body.fixedRotation = true;
         door.scale.setTo(0.2, 0.2);
-        door.body.immoveable = false;
-        door.body.moves = false;
 
-        //set collsion gruops to bodies and tell which to collide to
+        //set collsion groups to bodies and tell which to collide to
         door.body.setCollisionGroup(doorCollisionGroup);
         door.body.collides(playerCollisionGroup);
 
-        playerSprite.body.setCollisionGroup(playerCollisionGroup);
-        playerSprite.body.collides(doorCollisionGroup, this.hitDoor, this);
+        door.body.immoveable = true;
+        door.body.moves = false;
+
+       // playerSprite.body.setCollisionGroup(playerCollisionGroup);
+       // playerSprite.body.collides(doorCollisionGroup, this.hitDoor, this);
 
 
         // this.game.world.setBounds(0, 0, 3240, 5760);
 
         //Camera
-        this.game.camera.follow(playerSprite);
+        this.game.camera.follow(animaRight);
 
         //Controls
         cursors = this.game.input.keyboard.createCursorKeys();
@@ -82,7 +99,7 @@ city.prototype = {
     //Gets called every time the canvas updates 60fps = 60 times a second
     update: function () {
 
-        playerSprite.body.setZeroVelocity();
+       // playerSprite.body.setZeroVelocity();
 
         //Controll movement an player inputs
         if (this.shift.isDown) {
@@ -92,10 +109,12 @@ city.prototype = {
         }
         if (this.rightKey.isDown) {
             player.moveRight(movementspeed);
-            lastMovement = this.game.time.now;
+             lastMovement = this.game.time.now;
+            animaRight.animations.play('right',12,true);
         } else if (this.leftKey.isDown) {
             player.moveLeft(movementspeed);
             lastMovement = this.game.time.now;
+            animaRight.animations.play('right', 12, true);
         } else {
             player.sprite.body.velocity.x = 0;
         }
@@ -103,9 +122,11 @@ city.prototype = {
         if (this.upKey.isDown) {
             player.moveUp(movementspeed);
             lastMovement = this.game.time.now;
+            animaRight.animations.play('right', 12, true);
         } else if (this.downKey.isDown) {
             player.moveDown(movementspeed);
             lastMovement = this.game.time.now;
+            animaRight.animations.play('right', 12, true);
         } else {
             player.sprite.body.velocity.y = 0;
         }

@@ -209,6 +209,8 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="App\assets\map.jpg" />
+    <Content Include="App\assets\skeleton-animation-left.png" />
+    <Content Include="App\assets\skeleton-animation-right.png" />
     <Content Include="App\libs\phaser.js" />
     <Content Include="App\assets\menu-background.jpg" />
     <Content Include="App\assets\Menu_Red_01.png" />
