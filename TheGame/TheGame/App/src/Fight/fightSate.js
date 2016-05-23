@@ -5,16 +5,20 @@
 var player;
 var number;
 
+var backgroundGroup;
+var mainGroup;
+var UIGroup;
+
 fight.prototype = {
     preload: function () {
         //Controll witch enemy number
         number = 1;
         //Loads the arena/background
-        this.load.image('arena-' + number, 'App/assets/fighting/arenas/arena' + number + '.png');
+        this.load.image('arena-' + number, 'App/assets/fighting/arenas/arena-' + number + '.png');
         //load enemy
-        this.game.load.spritesheet('enemy' + number, 'App/assets/fighting/enemy/enemy-' + number + '.png', 480, 550);
-        this.load.image('enemy' + number + 'bullet', 'App/assets/fighting/enemy/enemy-' + number + '-projectile.png')
-        
+        this.game.load.spritesheet('enemy' + number, 'App/assets/fighting/enemy/enemy-' + number + '/enemy-' + number + '.png', 480, 550);
+        this.load.image('enemy' + number + 'bullet', 'App/assets/fighting/enemy/enemy-' + number + '/enemy-' + number + '-projectile.png');
+
     },
     create: function() {
         //Setup background image
