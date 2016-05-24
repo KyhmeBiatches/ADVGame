@@ -208,6 +208,7 @@
     <Compile Include="Startup.cs" />
   </ItemGroup>
   <ItemGroup>
+<<<<<<< HEAD
     <Content Include="App\assets\fighting\arenas\arena-1.png" />
     <Content Include="App\assets\fighting\enemy\enemy-1\enemy-1-portrait.png" />
     <Content Include="App\assets\fighting\enemy\enemy-1\enemy-1-projectile.png" />
@@ -215,6 +216,11 @@
     <Content Include="App\assets\fighting\guns\gun1\bullet.png" />
     <Content Include="App\assets\fighting\player\char_portrait.png" />
     <Content Include="App\assets\player\skeleton-animation-right.png" />
+=======
+    <Content Include="App\assets\map.jpg" />
+    <Content Include="App\assets\skeleton-animation-left.png" />
+    <Content Include="App\assets\skeleton-animation-right.png" />
+>>>>>>> feature/CityState
     <Content Include="App\libs\phaser.js" />
     <Content Include="App\assets\menu-background.jpg" />
     <Content Include="App\assets\Menu_Red_01.png" />
@@ -234,6 +240,7 @@
     <Content Include="App\src\Fight\fightSate.js" />
     <Content Include="App\src\Menu\menuState.js" />
     <Content Include="App\src\Preload\preloadState.js" />
+    <Content Include="App\src\Shop\shopState.js" />
     <Content Include="Content\bootstrap.css" />
     <Content Include="Content\bootstrap.min.css" />
     <Content Include="favicon.ico" />
