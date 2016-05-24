@@ -40,7 +40,8 @@ fight.prototype = {
         //Load player portrait
         this.load.image('playerportrait', 'App/assets/fighting/player/char_portrait.png');
 
-
+        //Load enemy sounds
+        this.load.audio('enemy' + number + 'gunsound', 'App/assets/sounds/fighting/enemy-' + number + '/enemy-' + number + '-gunsound.wav');
 
     },
     create: function () {
@@ -182,8 +183,7 @@ fight.prototype = {
                 this.enemyFire();
             }
 
-            this.bullets.forEachExists(function(bullet) {
-
+            this.bullets.forEachExists(function (bullet) {
                 if (bullet.y < 0 || bullet.x < 0) {
                     console.log(bullet.x + " " + bullet.y);
                     bullet.destroy();
@@ -213,7 +213,8 @@ fight.prototype = {
                 bullet.body.data.gravityScale = 0;
                 bullet.body.allowGravity = false;
 
-                
+                this.game.sound.play('enemy' + number + 'gunsound');
+
                 bullet.body.setCollisionGroup(this.enemyCollisionGroup);
                 bullet.body.removeCollisionGroup(this.enemyCollisionGroup);
                 bullet.body.collides(this.playerCollisionGroup, this.playerHit, this);
@@ -289,11 +290,13 @@ fight.prototype = {
         
     },
 
-    quitAfterLoose: function() {
-        
+    quitAfterLoose: function () {
+        this.game.sound.play('StartGameSound');
+        this.game.state.start('City');
     },
 
-    retry: function() {
+    retry: function () {
+        this.game.sound.play('StartGameSound');
         this.game.state.start('Fight');
     },
 
