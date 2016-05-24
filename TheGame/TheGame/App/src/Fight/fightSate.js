@@ -4,12 +4,13 @@
 
 var cursors;
 
-var player;
 var number;
 
+var player;
 var playerHp;
 
 var enemy;
+var enemyHp;
 
 var fightIsActive;
 var status;
@@ -37,6 +38,10 @@ fight.prototype = {
         //Loads player sprite sheet
         this.game.load.spritesheet('playerspritesheet', 'App/assets/player/skeleton-animation-right.png', 480, 550);
 
+        //Load player bullet
+        var gunNumber = 1;
+        this.load.image('playerbullet', 'App/assets/fighting/guns/gun' + gunNumber + '/bullet.png');
+
         //Load player portrait
         this.load.image('playerportrait', 'App/assets/fighting/player/char_portrait.png');
 
@@ -57,6 +62,9 @@ fight.prototype = {
 
         //Setup player HP;
         playerHp = 5;
+
+        //Setup enemy HP
+        enemyHp = 5;
 
         //Set the fight to being active
         fightIsActive = true;
@@ -92,22 +100,34 @@ fight.prototype = {
         this.game.physics.p2.updateBoundsCollisionGroup();
 
         //Setup the enemy
-        enemy = this.game.add.sprite(950, 490, 'enemy' + number);
+        enemy = this.game.add.sprite(880, 490, 'enemy' + number);
         enemy.anchor.set(0.5, 1);
         enemy.scale.set(1);
         mainGroup.add(enemy);
 
         //Setup enemy bullets
-        this.bullets = this.game.add.group();
+        this.enemyBullets = this.game.add.group();
         this.nextEnemyFire = 0;
 
-        this.bullets.enableBody = true;
-        this.bullets.physicsBodyType = Phaser.Physics.P2;
-        this.bullets.createMultiple(50, 'enemy' + number + 'bullet');
-        this.bullets.setAll('checkWorldBounds', true);
-        this.bullets.setAll('outOfBoundsKill', true);
-        this.bullets.setAll('anchor.x', 0.5);
-        this.bullets.setAll('anchor.y', 0.5);
+        this.enemyBullets.enableBody = true;
+        this.enemyBullets.physicsBodyType = Phaser.Physics.P2;
+        this.enemyBullets.createMultiple(50, 'enemy' + number + 'bullet');
+        this.enemyBullets.setAll('checkWorldBounds', true);
+        this.enemyBullets.setAll('outOfBoundsKill', true);
+        this.enemyBullets.setAll('anchor.x', 0.5);
+        this.enemyBullets.setAll('anchor.y', 0.5);
+
+        //Setup player bullets
+        this.playerBullets = this.game.add.group();
+        this.nextPlayerFire = 0;
+
+        this.playerBullets.enableBody = true;
+        this.playerBullets.physicsBodyType = Phaser.Physics.P2;
+        this.playerBullets.createMultiple(50, 'playerbullet');
+        this.playerBullets.setAll('checkWorldBounds', true);
+        this.playerBullets.setAll('outOfBoundsKill', true);
+        this.playerBullets.setAll('anchor.x', 0.5);
+        this.playerBullets.setAll('anchor.y', 0.5);
 
         //Setup enemy portrait
         var enemyportrait = this.game.add.sprite(1080, 0, 'enemy' + number + 'portrait');
@@ -183,43 +203,94 @@ fight.prototype = {
                 this.enemyFire();
             }
 
-            this.bullets.forEachExists(function (bullet) {
-                if (bullet.y < 0 || bullet.x < 0) {
+            //Player mouse click / shooting
+            if (this.game.input.activePointer.isDown) {
+                this.playerFire();
+            }
+            //console.log('Dead = ' + this.enemyBullets.countDead());
+            //console.log('Alive = ' + this.enemyBullets.countLiving());
+            this.enemyBullets.forEachExists(function (bullet) {
+                if (bullet.y < 0 || bullet.x  < 0) {
                     console.log(bullet.x + " " + bullet.y);
                     bullet.destroy();
                 }
             }, this);
         }
+
     },
 
     enemyFire: function () {
 
-        if (this.game.time.now > this.nextEnemyFire && this.bullets.countDead() > 0) {
+        if (this.game.time.now > this.nextEnemyFire && this.enemyBullets.countDead() > 0) {
 
-            var bullet = this.bullets.getFirstExists(false);
+            var bullet = this.enemyBullets.getFirstExists(false);
             var angle = this.game.math.angleBetweenPoints(enemy.position, player.position);
 
             if (bullet) {
                 this.game.physics.p2.enable(bullet);
-                bullet.reset(enemy.x , enemy.y - 200);
+                bullet.reset(enemy.x, enemy.y - 480);
 
                 this.nextEnemyFire = this.game.time.now + 1200;
+
+                bullet.anchor.set(0.5);
+                bullet.scale.set(3);
+                
+                bullet.body.clearShapes();
+                bullet.body.addCircle(27, -27, 414);
+                bullet.body.velocity.x = 500 * Math.cos(angle);
+                bullet.body.velocity.y = 500 * Math.sin(angle);
+                bullet.body.fixedRotation = true;
+                bullet.body.data.gravityScale = 0;
+                bullet.body.allowGravity = false;
+                bullet.checkWorldBounds = true;
+                bullet.outOfBoundsKill = true;
+           
+                this.game.sound.play('enemy' + number + 'gunsound');
+
+                bullet.body.setCollisionGroup(this.enemyCollisionGroup);
+                bullet.body.removeCollisionGroup(this.enemyCollisionGroup);
+                bullet.body.collides(this.playerCollisionGroup, this.playerHit, this);
+                
+
+                bullet.body.debug = true;
+            }
+        }
+    },
+
+    playerFire: function() {
+        if (this.game.time.now > this.nextPlayerFire && this.playerBullets.countDead() > 0) {
+
+            var bullet = this.playerBullets.getFirstExists(false);
+            var mousePoint = new Phaser.Point(this.game.input.mousePointer.x, this.game.input.mousePointer.y);
+            var angle = this.game.math.angleBetweenPoints(player.position, mousePoint);
+
+            if (bullet) {
+                this.game.physics.p2.enable(bullet);
+
+                bullet.reset(player.x, player.y - 80 );
+
+                this.nextPlayerFire = this.game.time.now + 1200;
+                bullet.anchor.set(0.5);
+                bullet.body.rotation = angle;
+                bullet.rotation = angle;
+                bullet.scale.set(.5);
+
                 mainGroup.add(bullet);
                 bullet.body.clearShapes();
-                bullet.body.addRectangle(18, 18, -10, 138);
+                bullet.body.addRectangle(9, 9, 0, 0);
                 bullet.body.velocity.x = 500 * Math.cos(angle);
                 bullet.body.velocity.y = 500 * Math.sin(angle);
                 bullet.body.fixedRotation = true;
                 bullet.body.data.gravityScale = 0;
                 bullet.body.allowGravity = false;
 
-                this.game.sound.play('enemy' + number + 'gunsound');
+                //this.game.sound.play('playergunsound');
 
-                bullet.body.setCollisionGroup(this.enemyCollisionGroup);
-                bullet.body.removeCollisionGroup(this.enemyCollisionGroup);
-                bullet.body.collides(this.playerCollisionGroup, this.playerHit, this);
+                bullet.body.setCollisionGroup(this.playerCollisionGroup);
+                bullet.body.removeCollisionGroup(this.playerCollisionGroup);
+                bullet.body.collides(this.enemyCollisionGroup, this.enemyHit, this);
 
-
+                bullet.body.debug = true;
             }
         }
     },
@@ -230,22 +301,36 @@ fight.prototype = {
         if (playerHp === 0) {
             this.playerLost();
         }
-        console.log(playerHp);
+        console.log('PLAYER HP = ' + playerHp);
     },
 
-    playerLost: function() {
-        console.log('Player LOST');
-        status = 'DEFEAT';
-        fightIsActive = false;
-        this.drawStatusScreen();
-        player.animations.play('none');
+    enemyHit: function(bullet) {
+        bullet.sprite.destroy();
+        enemyHp -= 1;
+        if (enemyHp === 0) {
+            this.playerWon();
+        }
+        console.log('ENEMY HP = ' + enemyHp);
     },
 
-    playerWon: function() {
-        console.log('Player WON');
-        status = 'WON';
-        fightIsActive = false;
-        drawStatusScreen();
+    playerLost: function () {
+        if (status === 'ACTIVE') {
+            console.log('Player LOST');
+            status = 'DEFEAT';
+            fightIsActive = false;
+            this.drawStatusScreen();
+            player.animations.play('none');
+        }
+    },
+
+    playerWon: function () {
+        if (status === 'ACTIVE') {
+            console.log('Player WON');
+            status = 'WON';
+            fightIsActive = false;
+            this.drawStatusScreen();
+            player.animations.play('none');
+        }
     },
 
     drawStatusScreen: function () {
@@ -287,7 +372,8 @@ fight.prototype = {
     },
 
     continueAfterFight: function() {
-        
+        this.game.sound.play('StartGameSound');
+        //this.game.state.start('City');
     },
 
     quitAfterLoose: function () {
