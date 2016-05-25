@@ -38,8 +38,8 @@ city.prototype = {
 
         animaRight = this.game.add.sprite(100, 100, 'player-right');
         animaRight.frame = 20;
-        animaLeft = this.game.add.sprite(0, 0, 'player-left');
-        animaLeft.frame = 20;
+     //   animaLeft = this.game.add.sprite(0, 0, 'player-left');
+       // animaLeft.frame = 20;
 
         //player for PLayer model
         player = new this.Player(animaRight);
@@ -51,12 +51,15 @@ city.prototype = {
         playerSprite.body.collideWorldBounds = true;
         */
         animaRight.animations.add('right', [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]);
-        animaLeft.animations.add('left', [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]);
-        this.game.physics.p2.enable(animaRight, true);
+        animaRight.animations.add('none', [0]);
+        animaRight.animations.play('none', 12, false);
+       // animaLeft.animations.add('left', [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]);
+        this.game.physics.p2.enable(animaRight, false);
         animaRight.scale.setTo(0.4, 0.4);
         animaRight.smoothed = false;
         animaRight.body.collideWorldBounds = true;
         animaRight.body.setRectangle(80, 120, 0, 0);
+        animaRight.body.fixedRotation = true;
 
         //creating doors to a group
         var doors = this.game.add.group();
@@ -77,8 +80,8 @@ city.prototype = {
         door.body.immoveable = true;
         door.body.moves = false;
 
-       // playerSprite.body.setCollisionGroup(playerCollisionGroup);
-       // playerSprite.body.collides(doorCollisionGroup, this.hitDoor, this);
+        animaRight.body.setCollisionGroup(playerCollisionGroup);
+        animaRight.body.collides(doorCollisionGroup, this.hitDoor, this);
 
 
         // this.game.world.setBounds(0, 0, 3240, 5760);
@@ -99,7 +102,7 @@ city.prototype = {
     //Gets called every time the canvas updates 60fps = 60 times a second
     update: function () {
 
-       // playerSprite.body.setZeroVelocity();
+        animaRight.body.setZeroVelocity();
 
         //Controll movement an player inputs
         if (this.shift.isDown) {
@@ -108,27 +111,31 @@ city.prototype = {
             movementspeed = player.walkSpeed;
         }
         if (this.rightKey.isDown) {
-            player.moveRight(movementspeed);
-             lastMovement = this.game.time.now;
-            animaRight.animations.play('right',12,true);
+            animaRight.body.velocity.x = movementspeed;
+            lastMovement = this.game.time.now;
+            if (animaRight.animations.name != 'right') {
+                animaRight.frame = 0;
+                animaRight.animations.play('right', 12, true);
+            }
         } else if (this.leftKey.isDown) {
-            player.moveLeft(movementspeed);
+            animaRight.body.velocity.x = -movementspeed;
             lastMovement = this.game.time.now;
             animaRight.animations.play('right', 12, true);
         } else {
             player.sprite.body.velocity.x = 0;
+            animaRight.animations.play('none', 1, true);
         }
 
         if (this.upKey.isDown) {
-            player.moveUp(movementspeed);
+            animaRight.body.velocity.y = -movementspeed;
             lastMovement = this.game.time.now;
             animaRight.animations.play('right', 12, true);
         } else if (this.downKey.isDown) {
-            player.moveDown(movementspeed);
+            animaRight.body.velocity.y = +movementspeed;
             lastMovement = this.game.time.now;
             animaRight.animations.play('right', 12, true);
         } else {
-            player.sprite.body.velocity.y = 0;
+            animaRight.body.velocity.y = 0;
         }
 
         if (this.game.time.now == lastMovement + timeForIdle) {
@@ -141,6 +148,7 @@ city.prototype = {
             console.log("virker");
             var enterDoorlabel = this.game.add.text(400, this.game.world.height - 220, 'press e to enter door', { font: '25px Arial', fill: '#ffffff' });
             var ekey = this.game.input.keyboard.addKey(Phaser.Keyboard.E);
+            enterDoorlabel.fixedToCamera = true;
             ekey.onDown.addOnce(this.shop, this);
 
             body1.hasCollided = true;
@@ -156,30 +164,28 @@ city.prototype = {
         this.maxHealth = 100;
 
         this.moveRight = function (movementspeed) {
-            player.sprite.body.velocity.x = movementspeed;
+            
+            
+        };
+
+        this.moveLeft = function (movementspeed) {
+            player.sprite.body.velocity.x = -movementspeed;
             if (this.lastTexture != 'player-right') {
                 this.sprite.loadTexture('player-right');
             }
         };
 
-        this.moveLeft = function (movementspeed) {
-            player.sprite.body.velocity.x = -movementspeed;
-            if (this.lastTexture != 'player-left') {
-                this.sprite.loadTexture('player-left');
-            }
-        };
-
         this.moveDown = function (movementspeed) {
             player.sprite.body.velocity.y = +movementspeed;
-            if (this.lastTexture != 'player-front') {
-                this.sprite.loadTexture('player-front');
+            if (this.lastTexture != 'player-right') {
+                this.sprite.loadTexture('player-right');
             }
         };
 
         this.moveUp = function (movementspeed) {
             player.sprite.body.velocity.y = -movementspeed;
-            if (this.lastTexture != 'player-back') {
-                this.sprite.loadTexture('player-back');
+            if (this.lastTexture != 'player-right') {
+                this.sprite.loadTexture('player-right');
             }
         };
 
@@ -192,8 +198,8 @@ city.prototype = {
 
         this.fightMoveLeft = function () {
             player.sprite.body.velocity.x = -300;
-            if (this.lastTexture != 'player-fight-left') {
-                this.sprite.loadTexture('player-fight-left');
+            if (this.lastTexture != 'player-fight-right') {
+                this.sprite.loadTexture('player-fight-right');
             }
         };
 
