@@ -55,7 +55,7 @@ city.prototype = {
         animaRight.animations.play('none', 12, false);
        // animaLeft.animations.add('left', [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]);
         this.game.physics.p2.enable(animaRight, false);
-        animaRight.scale.setTo(0.4, 0.4);
+        animaRight.scale.setTo(0.6, 0.6);
         animaRight.smoothed = false;
         animaRight.body.collideWorldBounds = true;
         animaRight.body.setRectangle(80, 120, 0, 0);
@@ -67,7 +67,7 @@ city.prototype = {
         doors.physicsBodyType = Phaser.Physics.P2JS;
 
         //creating and places door
-        var door = doors.create(500, 400, 'player-back');
+        var door = doors.create(600, 3250, 'player-back');
         door.body.setRectangle(40, 60, 0, 0);
         door.body.debug = false;
         door.body.fixedRotation = true;
