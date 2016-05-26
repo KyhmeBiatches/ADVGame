@@ -132,6 +132,8 @@ fight.prototype = {
         //Collision Groups
         this.enemyCollisionGroup = this.game.physics.p2.createCollisionGroup();
         this.playerCollisionGroup = this.game.physics.p2.createCollisionGroup();
+        this.enemyBulletsCollisionGroup = this.game.physics.p2.createCollisionGroup();
+        this.playerBulletsCollisionGroup = this.game.physics.p2.createCollisionGroup();
         this.game.physics.p2.updateBoundsCollisionGroup();
 
         //Setup the enemy
@@ -147,10 +149,6 @@ fight.prototype = {
         this.enemyBullets.enableBody = true;
         this.enemyBullets.physicsBodyType = Phaser.Physics.P2;
         this.enemyBullets.createMultiple(50, 'enemy' + number + 'bullet');
-        //this.enemyBullets.setAll('checkWorldBounds', true);
-        //this.enemyBullets.setAll('outOfBoundsKill', true);
-        //this.enemyBullets.setAll('anchor.x', 0.5);
-        //this.enemyBullets.setAll('anchor.y', 0.5);
 
         //Setup player bullets
         this.playerBullets = this.game.add.group();
@@ -159,10 +157,6 @@ fight.prototype = {
         this.playerBullets.enableBody = true;
         this.playerBullets.physicsBodyType = Phaser.Physics.P2;
         this.playerBullets.createMultiple(50, 'playerbullet');
-        this.playerBullets.setAll('checkWorldBounds', true);
-        this.playerBullets.setAll('outOfBoundsKill', true);
-        this.playerBullets.setAll('anchor.x', 0.5);
-        this.playerBullets.setAll('anchor.y', 0.5);
 
         //Setup enemy portrait
         var enemyFrame = this.game.add.sprite(150, -10, 'enemyFrame');
@@ -194,8 +188,8 @@ fight.prototype = {
         player.body.setCollisionGroup(this.playerCollisionGroup);
 
         //Tell sprites to collide with collision group
-        player.body.collides(this.enemyCollisionGroup);
-        enemy.body.collides(this.playerCollisionGroup);
+        player.body.collides(this.enemyBulletsCollisionGroup);
+        enemy.body.collides(this.playerBulletsCollisionGroup);
         
 
         //Controls
@@ -208,6 +202,9 @@ fight.prototype = {
 
         //Setup the jump
         this.upKey.onDown.add(this.jump, this);
+
+        //Make sure player is on top
+        mainGroup.bringToTop(player);
     },
     update: function () {
         //Wraped everything in fightIsActive so we are able to stop the fight when its won or lost
@@ -291,7 +288,7 @@ fight.prototype = {
            
                 this.game.sound.play('enemygunsound');
 
-                bullet.body.setCollisionGroup(this.enemyCollisionGroup);
+                bullet.body.setCollisionGroup(this.enemyBulletsCollisionGroup);
                 bullet.body.removeCollisionGroup(this.enemyCollisionGroup);
                 bullet.body.collides(this.playerCollisionGroup, this.playerHit, this);
                 
@@ -336,7 +333,7 @@ fight.prototype = {
 
                 this.game.sound.play('playerFireSound');
 
-                bullet.body.setCollisionGroup(this.playerCollisionGroup);
+                bullet.body.setCollisionGroup(this.playerBulletsCollisionGroup);
                 bullet.body.removeCollisionGroup(this.playerCollisionGroup);
                 bullet.body.collides(this.enemyCollisionGroup, this.enemyHit, this);
 
