@@ -239,14 +239,6 @@ fight.prototype = {
             if (this.game.input.activePointer.isDown) {
                 this.playerFire();
             }
-            //console.log('Dead = ' + this.enemyBullets.countDead());
-            //console.log('Alive = ' + this.enemyBullets.countLiving());
-           /* this.enemyBullets.forEachExists(function (bullet) {
-                if (bullet.y < 0 || bullet.x  < 0) {
-                    console.log(bullet.x + " " + bullet.y);
-                    bullet.destroy();
-                }
-            }, this);*/
         }
 
     },
@@ -270,7 +262,8 @@ fight.prototype = {
 
                 bullet.anchor.set(0.5);
                 bullet.scale.set(3);
-                
+
+                mainGroup.add(bullet);
                 bullet.body.clearShapes();
                 bullet.body.addCircle(27, -27, 414);
                 bullet.body.velocity.x = 500 * Math.cos(angle);
@@ -346,12 +339,14 @@ fight.prototype = {
         bullet.sprite.destroy();
         playerHp -= 1;
         this.game.sound.play('playerHitSound');
-        this.playerHpText.setText(playerHp + '/' + playerMaxHp);
         var healthBarProcent = (playerHp / playerMaxHp);
         this.playerHealthbar.scale.set(healthBarProcent, 1);
         if (playerHp === 0) {
             this.playerLost();
             this.playerHpText.setText('DEAD');
+        }
+        if(playerHp > 0){
+            this.playerHpText.setText(playerHp + '/' + playerMaxHp);
         }
         console.log('PLAYER HP = ' + playerHp);
     },
@@ -360,12 +355,14 @@ fight.prototype = {
         bullet.sprite.destroy();
         enemyHp -= 1;
         this.game.sound.play('enemyhitsound');
-        this.enemyHpText.setText(enemyHp + '/' + enemyMaxHp);
         var healthBarProcent = (enemyHp / enemyMaxHp);
         this.enemyHealthbar.scale.set(healthBarProcent, 1);
         if (enemyHp === 0) {
             this.playerWon();
             this.enemyHpText.setText('DEAD');
+        } 
+        if (enemyHp > 0) {
+            this.enemyHpText.setText(enemyHp + '/' + enemyMaxHp);
         }
         console.log('ENEMY HP = ' + enemyHp);
     },
