@@ -7,9 +7,11 @@ var cursors;
 var number;
 
 var player;
+var playerMaxHp;
 var playerHp;
 
 var enemy;
+var enemyMaxHp;
 var enemyHp;
 
 var fightIsActive;
@@ -30,10 +32,20 @@ fight.prototype = {
         number = 1;
         //Loads the arena/background
         this.load.image('arena-' + number, 'App/assets/fighting/arenas/arena-' + number + '.png');
+
+        //Load healthbar background
+            //For the enemy
+        this.load.image('enemyFrame', 'App/assets/fighting/utillity/enemy/enemy-frame.png');
+            //For the player
+        this.load.image('playerFrame', 'App/assets/fighting/utillity/player/player-frame.png');
+
+
         //load enemy
         this.game.load.spritesheet('enemy' + number, 'App/assets/fighting/enemy/enemy-' + number + '/enemy-' + number + '.png', 480, 550);
+            //Load bullet
         this.load.image('enemy' + number + 'bullet', 'App/assets/fighting/enemy/enemy-' + number + '/enemy-' + number + '-projectile.png');
-        this.load.image('enemy' + number + 'portrait', 'App/assets/fighting/enemy/enemy-' + number + '/enemy-' + number + '-portrait.png');
+            //Load enemy icon
+        this.load.image('enemy' + number + 'icon', 'App/assets/fighting/enemy/enemy-' + number + '/enemy-' + number + '-icon.png');
 
         //Loads player sprite sheet
         this.game.load.spritesheet('playerspritesheet', 'App/assets/player/skeleton-animation-right.png', 480, 550);
@@ -42,11 +54,18 @@ fight.prototype = {
         var gunNumber = 1;
         this.load.image('playerbullet', 'App/assets/fighting/guns/gun' + gunNumber + '/bullet.png');
 
-        //Load player portrait
-        this.load.image('playerportrait', 'App/assets/fighting/player/char_portrait.png');
+        //Load player icon
+        this.load.image('playerIcon', 'App/assets/fighting/player/player-icon.png');
 
         //Load enemy sounds
-        this.load.audio('enemy' + number + 'gunsound', 'App/assets/sounds/fighting/enemy-' + number + '/enemy-' + number + '-gunsound.wav');
+        this.load.audio('enemygunsound', 'App/assets/sounds/fighting/enemy-' + number + '/enemy-' + number + '-gunsound.wav');
+        this.load.audio('enemyhitsound', 'App/assets/sounds/fighting/enemy-' + number + '/enemy-' + number + '-hit-sound.wav');
+
+        //Load player sounds
+        this.load.audio('playerHitSound', 'App/Assets/sounds/fighting/player/player-hit-sound.wav');
+
+        //Load gun sounds
+        this.load.audio('playerFireSound', 'App/Assets/sounds/fighting/gun-' + gunNumber + '/fire-sound.wav');
 
     },
     create: function () {
@@ -62,9 +81,11 @@ fight.prototype = {
 
         //Setup player HP;
         playerHp = 5;
+        playerMaxHp = playerHp;
 
         //Setup enemy HP
         enemyHp = 5;
+        enemyMaxHp = enemyHp;
 
         //Set the fight to being active
         fightIsActive = true;
@@ -90,9 +111,16 @@ fight.prototype = {
         this.game.physics.p2.setImpactEvents(true);
 
         //Setup player portrait
-        var playerportrait = this.game.add.sprite(0, 10, 'playerportrait');
-        playerportrait.anchor.set(0, 0);
-        playerportrait.scale.set(0.5);
+        var playerframe = this.game.add.sprite(-30, 0, 'playerFrame');
+        playerframe.scale.set(0.5);
+        this.playericon = this.game.add.sprite(-30, 0, 'playerIcon');
+        this.playericon.scale.set(0.5);
+        UIGroup.add(playerframe);
+        UIGroup.add(this.playericon);
+        
+
+        //Setup the healthbars
+        this.setUpHeahtBars();
 
         //Collision Groups
         this.enemyCollisionGroup = this.game.physics.p2.createCollisionGroup();
@@ -130,10 +158,13 @@ fight.prototype = {
         this.playerBullets.setAll('anchor.y', 0.5);
 
         //Setup enemy portrait
-        var enemyportrait = this.game.add.sprite(1080, 0, 'enemy' + number + 'portrait');
-        enemyportrait.anchor.set(1, 0);
-        UIGroup.add(enemyportrait);
-        enemyportrait.scale.set(0.5);
+        var enemyFrame = this.game.add.sprite(150, -10, 'enemyFrame');
+        enemyFrame.scale.set(0.5);
+        this.enemyicon = this.game.add.sprite(150, -10, 'enemy' + number + 'icon');
+        this.enemyicon.scale.set(0.5);
+        UIGroup.add(enemyFrame);
+        UIGroup.sendToBack(enemyFrame);
+        UIGroup.add(this.enemyicon);
 
         //Enable physics for sprites
         this.game.physics.p2.enable([enemy, player]);
@@ -245,7 +276,7 @@ fight.prototype = {
                 bullet.checkWorldBounds = true;
                 bullet.outOfBoundsKill = true;
            
-                this.game.sound.play('enemy' + number + 'gunsound');
+                this.game.sound.play('enemygunsound');
 
                 bullet.body.setCollisionGroup(this.enemyCollisionGroup);
                 bullet.body.removeCollisionGroup(this.enemyCollisionGroup);
@@ -284,7 +315,7 @@ fight.prototype = {
                 bullet.body.data.gravityScale = 0;
                 bullet.body.allowGravity = false;
 
-                //this.game.sound.play('playergunsound');
+                this.game.sound.play('playerFireSound');
 
                 bullet.body.setCollisionGroup(this.playerCollisionGroup);
                 bullet.body.removeCollisionGroup(this.playerCollisionGroup);
@@ -298,6 +329,10 @@ fight.prototype = {
     playerHit: function (bullet) {
         bullet.sprite.destroy();
         playerHp -= 1;
+        this.game.sound.play('playerHitSound');
+        this.playerHpText.setText(playerHp + '/' + playerMaxHp);
+        var healthBarProcent = (playerHp / playerMaxHp);
+        this.playerHealthbar.scale.set(healthBarProcent, 1);
         if (playerHp === 0) {
             this.playerLost();
         }
@@ -307,6 +342,10 @@ fight.prototype = {
     enemyHit: function(bullet) {
         bullet.sprite.destroy();
         enemyHp -= 1;
+        this.game.sound.play('enemyhitsound');
+        this.enemyHpText.setText(enemyHp + '/' + enemyMaxHp);
+        var healthBarProcent = (enemyHp / enemyMaxHp);
+        this.enemyHealthbar.scale.set(healthBarProcent, 1);
         if (enemyHp === 0) {
             this.playerWon();
         }
@@ -393,6 +432,36 @@ fight.prototype = {
 
     mouseOut: function (button) {
         button.scale.set(1, 1);
+    },
+
+    setUpHeahtBars: function () {
+        //Making bitmap (rectangle) for healthbars
+        var healthbarBitmap = this.game.add.bitmapData(158, 25);
+        healthbarBitmap.context.fillStyle = '#cc0000';
+        healthbarBitmap.context.fillRect(0, 0, 158, 64);
+
+        //Make player healthbar
+        this.playerHealthbar = this.game.add.sprite(118, 63, healthbarBitmap);
+        UIGroup.add(this.playerHealthbar);
+
+        //Bringing the player icon to top, to cover the healthbar
+        UIGroup.bringToTop(this.playericon);
+
+        //Setup the enemy healthbar
+        this.enemyHealthbar = this.game.add.sprite(961, 63, healthbarBitmap);
+        this.enemyHealthbar.anchor.set(1, 0);
+        UIGroup.add(this.enemyHealthbar);
+
+        //Setup hpbar text style
+        var hpbarTextStyle = { font: 'Bold 22px Arial', fill: '#ffffff' };
+
+        //Add player HP text
+        this.playerHpText = this.game.add.text(this.playerHealthbar.x + this.playerHealthbar.width / 2, this.playerHealthbar.y + this.playerHealthbar.height / 2 + 3, playerHp + "/" + playerMaxHp, hpbarTextStyle);
+        this.playerHpText.anchor.set(0.5);
+
+        //Add enemy HP text
+        this.enemyHpText = this.game.add.text(this.enemyHealthbar.x - this.enemyHealthbar.width / 2, this.enemyHealthbar.y + this.enemyHealthbar.height / 2 + 3, enemyHp + "/" + enemyMaxHp, hpbarTextStyle);
+        this.enemyHpText.anchor.set(0.5);
     }
 
 
