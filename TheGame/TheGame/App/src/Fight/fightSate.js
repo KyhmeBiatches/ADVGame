@@ -209,12 +209,12 @@ fight.prototype = {
             }
             //console.log('Dead = ' + this.enemyBullets.countDead());
             //console.log('Alive = ' + this.enemyBullets.countLiving());
-            this.enemyBullets.forEachExists(function (bullet) {
+           /* this.enemyBullets.forEachExists(function (bullet) {
                 if (bullet.y < 0 || bullet.x  < 0) {
                     console.log(bullet.x + " " + bullet.y);
                     bullet.destroy();
                 }
-            }, this);
+            }, this);*/
         }
 
     },
@@ -252,7 +252,7 @@ fight.prototype = {
                 bullet.body.collides(this.playerCollisionGroup, this.playerHit, this);
                 
 
-                bullet.body.debug = true;
+                //.body.debug = true;
             }
         }
     },
@@ -290,7 +290,7 @@ fight.prototype = {
                 bullet.body.removeCollisionGroup(this.playerCollisionGroup);
                 bullet.body.collides(this.enemyCollisionGroup, this.enemyHit, this);
 
-                bullet.body.debug = true;
+                //bullet.body.debug = true;
             }
         }
     },
