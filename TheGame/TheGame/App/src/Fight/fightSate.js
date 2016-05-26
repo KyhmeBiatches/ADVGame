@@ -67,6 +67,10 @@ fight.prototype = {
         //Load gun sounds
         this.load.audio('playerFireSound', 'App/Assets/sounds/fighting/gun-' + gunNumber + '/fire-sound.wav');
 
+        //Load uttility icons
+        this.load.image('gunpowderIcon', 'App/assets/fighting/utillity/gunpowder-icon.png');
+        this.load.image('energyIcon', 'App/assets/fighting/utillity/energy-icon.png');
+
     },
     create: function () {
         //Setup the needed groups
@@ -84,8 +88,11 @@ fight.prototype = {
         playerMaxHp = playerHp;
 
         //Setup enemy HP
-        enemyHp = 5;
+        enemyHp = 20;
         enemyMaxHp = enemyHp;
+
+        //Setup enemy gunpowder drop
+        this.gundpowderDrop = 10;
 
         //Set the fight to being active
         fightIsActive = true;
@@ -140,10 +147,10 @@ fight.prototype = {
         this.enemyBullets.enableBody = true;
         this.enemyBullets.physicsBodyType = Phaser.Physics.P2;
         this.enemyBullets.createMultiple(50, 'enemy' + number + 'bullet');
-        this.enemyBullets.setAll('checkWorldBounds', true);
-        this.enemyBullets.setAll('outOfBoundsKill', true);
-        this.enemyBullets.setAll('anchor.x', 0.5);
-        this.enemyBullets.setAll('anchor.y', 0.5);
+        //this.enemyBullets.setAll('checkWorldBounds', true);
+        //this.enemyBullets.setAll('outOfBoundsKill', true);
+        //this.enemyBullets.setAll('anchor.x', 0.5);
+        //this.enemyBullets.setAll('anchor.y', 0.5);
 
         //Setup player bullets
         this.playerBullets = this.game.add.group();
@@ -198,6 +205,9 @@ fight.prototype = {
         this.downKey = this.game.input.keyboard.addKey(Phaser.Keyboard.S);
         this.rightKey = this.game.input.keyboard.addKey(Phaser.Keyboard.D);
         this.leftKey = this.game.input.keyboard.addKey(Phaser.Keyboard.A);
+
+        //Setup the jump
+        this.upKey.onDown.add(this.jump, this);
     },
     update: function () {
         //Wraped everything in fightIsActive so we are able to stop the fight when its won or lost
@@ -214,12 +224,6 @@ fight.prototype = {
             } else {
                 player.body.velocity.x = 0;
                 player.animations.play('none');
-            }
-
-            if (this.upKey.isDown) {
-                player.body.moveUp(700);
-            } else if (this.downKey.isDown) {
-
             }
 
             if (cursors.left.isDown) {
@@ -250,6 +254,10 @@ fight.prototype = {
 
     },
 
+    jump: function() {
+        player.body.moveUp(700);
+    },
+
     enemyFire: function () {
 
         if (this.game.time.now > this.nextEnemyFire && this.enemyBullets.countDead() > 0) {
@@ -273,8 +281,13 @@ fight.prototype = {
                 bullet.body.fixedRotation = true;
                 bullet.body.data.gravityScale = 0;
                 bullet.body.allowGravity = false;
+                bullet.body.collideWorldBounds = false;
+
                 bullet.checkWorldBounds = true;
                 bullet.outOfBoundsKill = true;
+                bullet.autoCull = true;
+                bullet.outOfCameraBoundsKill = true;
+
            
                 this.game.sound.play('enemygunsound');
 
@@ -314,6 +327,12 @@ fight.prototype = {
                 bullet.body.fixedRotation = true;
                 bullet.body.data.gravityScale = 0;
                 bullet.body.allowGravity = false;
+                bullet.body.collideWorldBounds = false;
+
+                bullet.checkWorldBounds = true;
+                bullet.outOfBoundsKill = true;
+                bullet.autoCull = true;
+                bullet.outOfCameraBoundsKill = true;
 
                 this.game.sound.play('playerFireSound');
 
@@ -335,6 +354,7 @@ fight.prototype = {
         this.playerHealthbar.scale.set(healthBarProcent, 1);
         if (playerHp === 0) {
             this.playerLost();
+            this.playerHpText.setText('DEAD');
         }
         console.log('PLAYER HP = ' + playerHp);
     },
@@ -348,6 +368,7 @@ fight.prototype = {
         this.enemyHealthbar.scale.set(healthBarProcent, 1);
         if (enemyHp === 0) {
             this.playerWon();
+            this.enemyHpText.setText('DEAD');
         }
         console.log('ENEMY HP = ' + enemyHp);
     },
@@ -374,6 +395,8 @@ fight.prototype = {
 
     drawStatusScreen: function () {
         var continueBtn;
+        var energyText;
+        var energyIcon;
         var backgroundBitmap = this.game.add.bitmapData(this.game.width / 2, this.game.height / 2);
         backgroundBitmap.context.fillStyle = '#999999';
         backgroundBitmap.context.fillRect(0, 0, this.game.width / 2, this.game.height / 2);
@@ -388,7 +411,7 @@ fight.prototype = {
 
         if (status === 'DEFEAT') {
             var enemyTaunt = 'You aint strong enough human!';
-            var enemyDefeatText = this.game.make.text(background.x, background.y - background.height / 2 + 150, enemyTaunt, { font: 'Bold 22px Arial', fill: '#ffffff' });
+            var enemyDefeatText = this.game.make.text(background.x, background.y - background.height / 2 + 100, enemyTaunt, { font: 'Bold 22px Arial', fill: '#ffffff' });
             enemyDefeatText.anchor.set(0.5);
             UIGroup.add(enemyDefeatText);
 
@@ -398,10 +421,32 @@ fight.prototype = {
             quitBtn.anchor.set(0.5);
             UIGroup.add(quitBtn);
             continueBtn = this.game.add.button(background.x, background.y + 80, 'MenuContinueButton', this.retry, this);
+
+            energyText = this.game.add.text(background.x - 100, background.y + 10, '- 1', { font: 'Bold 26px Arial', fill: '#cc0000' });
+            energyText.anchor.set(0, 0.5);
+
+            energyIcon = this.game.add.sprite(background.x + 30, background.y, 'energyIcon');
+            energyIcon.anchor.set(0.5);
+            energyIcon.scale.set(0.3);
+
         }
 
         else if (status === 'WON') {
             continueBtn = this.game.add.button(background.x, background.y + 120, 'MenuContinueButton', this.continueAfterFight, this);
+
+            var gunpowderText = this.game.add.text(background.x - 100, background.y - 40, '+ ' + this.gundpowderDrop, { font: 'Bold 26px Arial', fill: '#47d147' });
+            gunpowderText.anchor.set(0, 0.5);
+
+            var gunpowderIcon = this.game.add.sprite(background.x + 30, background.y - 50, 'gunpowderIcon');
+            gunpowderIcon.anchor.set(0.5);
+            gunpowderIcon.scale.set(0.3);
+
+            energyText = this.game.add.text(background.x - 100, background.y + 30, '- 1', { font: 'Bold 26px Arial', fill: '#cc0000' });
+            energyText.anchor.set(0, 0.5);
+
+            energyIcon = this.game.add.sprite(background.x + 30, background.y + 20, 'energyIcon');
+            energyIcon.anchor.set(0.5);
+            energyIcon.scale.set(0.3);
         }
 
         continueBtn.events.onInputOver.add(this.mouseOver, this);
