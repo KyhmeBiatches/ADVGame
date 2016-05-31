@@ -88,15 +88,11 @@ fight.prototype = {
         playerMaxHp = playerHp;
 
         //Setup enemy HP
-        enemyHp = 20;
+        enemyHp = 10;
         enemyMaxHp = enemyHp;
 
         //Setup enemy gunpowder drop
         this.gundpowderDrop = 10;
-
-        //Set the fight to being active
-        fightIsActive = true;
-        status = 'ACTIVE';
 
         //Create player sprite
         player = this.game.add.sprite(80, 600, 'playerspritesheet');
@@ -205,7 +201,12 @@ fight.prototype = {
 
         //Make sure player is on top
         mainGroup.bringToTop(player);
+
+        //Set the fight to being active
+        fightIsActive = true;
+        status = 'ACTIVE';
     },
+
     update: function () {
         //Wraped everything in fightIsActive so we are able to stop the fight when its won or lost
         if (fightIsActive) {
@@ -231,7 +232,7 @@ fight.prototype = {
                 enemy.body.velocity.x = 0;
             }
 
-            if (cursors.down.isDown) {
+            if (this.canEnemyFire) {
                 this.enemyFire();
             }
 
@@ -247,6 +248,36 @@ fight.prototype = {
         player.body.moveUp(700);
     },
 
+    setUpHeahtBars: function () {
+        //Making bitmap (rectangle) for healthbars
+        var healthbarBitmap = this.game.add.bitmapData(158, 25);
+        healthbarBitmap.context.fillStyle = '#cc0000';
+        healthbarBitmap.context.fillRect(0, 0, 158, 64);
+
+        //Make player healthbar
+        this.playerHealthbar = this.game.add.sprite(118, 63, healthbarBitmap);
+        UIGroup.add(this.playerHealthbar);
+
+        //Bringing the player icon to top, to cover the healthbar
+        UIGroup.bringToTop(this.playericon);
+
+        //Setup the enemy healthbar
+        this.enemyHealthbar = this.game.add.sprite(961, 63, healthbarBitmap);
+        this.enemyHealthbar.anchor.set(1, 0);
+        UIGroup.add(this.enemyHealthbar);
+
+        //Setup hpbar text style
+        var hpbarTextStyle = { font: 'Bold 22px Arial', fill: '#ffffff' };
+
+        //Add player HP text
+        this.playerHpText = this.game.add.text(this.playerHealthbar.x + this.playerHealthbar.width / 2, this.playerHealthbar.y + this.playerHealthbar.height / 2 + 3, playerHp + "/" + playerMaxHp, hpbarTextStyle);
+        this.playerHpText.anchor.set(0.5);
+
+        //Add enemy HP text
+        this.enemyHpText = this.game.add.text(this.enemyHealthbar.x - this.enemyHealthbar.width / 2, this.enemyHealthbar.y + this.enemyHealthbar.height / 2 + 3, enemyHp + "/" + enemyMaxHp, hpbarTextStyle);
+        this.enemyHpText.anchor.set(0.5);
+    },
+
     enemyFire: function () {
 
         if (this.game.time.now > this.nextEnemyFire && this.enemyBullets.countDead() > 0) {
@@ -257,8 +288,6 @@ fight.prototype = {
             if (bullet) {
                 this.game.physics.p2.enable(bullet);
                 bullet.reset(enemy.x, enemy.y - 480);
-
-                this.nextEnemyFire = this.game.time.now + 1200;
 
                 bullet.anchor.set(0.5);
                 bullet.scale.set(3);
@@ -278,6 +307,7 @@ fight.prototype = {
                 bullet.autoCull = true;
                 bullet.outOfCameraBoundsKill = true;
 
+                this.nextEnemyFire = this.game.time.now + 1200;
            
                 this.game.sound.play('enemygunsound');
 
@@ -289,6 +319,16 @@ fight.prototype = {
                 //.body.debug = true;
             }
         }
+    },
+
+    canEnemyFire: function () {
+        var result;
+        if (this.game.time.now > this.nextEnemyFire) {
+            result = true;
+        } else {
+            result = false;
+        }
+        return result;
     },
 
     playerFire: function() {
@@ -337,39 +377,40 @@ fight.prototype = {
 
     playerHit: function (bullet) {
         bullet.sprite.destroy();
-        playerHp -= 1;
-        this.game.sound.play('playerHitSound');
-        var healthBarProcent = (playerHp / playerMaxHp);
-        this.playerHealthbar.scale.set(healthBarProcent, 1);
-        if (playerHp === 0) {
-            this.playerLost();
-            this.playerHpText.setText('DEAD');
+        if (status === 'ACTIVE') {
+            playerHp -= 1;
+            this.game.sound.play('playerHitSound');
+            var healthBarProcent = (playerHp / playerMaxHp);
+            this.playerHealthbar.scale.set(healthBarProcent, 1);
+            if (playerHp === 0) {
+                this.playerLost();
+                this.playerHpText.setText('DEAD');
+            }
+            if (playerHp > 0) {
+                this.playerHpText.setText(playerHp + '/' + playerMaxHp);
+            }
         }
-        if(playerHp > 0){
-            this.playerHpText.setText(playerHp + '/' + playerMaxHp);
-        }
-        console.log('PLAYER HP = ' + playerHp);
     },
 
     enemyHit: function(bullet) {
         bullet.sprite.destroy();
-        enemyHp -= 1;
-        this.game.sound.play('enemyhitsound');
-        var healthBarProcent = (enemyHp / enemyMaxHp);
-        this.enemyHealthbar.scale.set(healthBarProcent, 1);
-        if (enemyHp === 0) {
-            this.playerWon();
-            this.enemyHpText.setText('DEAD');
-        } 
-        if (enemyHp > 0) {
-            this.enemyHpText.setText(enemyHp + '/' + enemyMaxHp);
+        if (status === 'ACTIVE') {
+            enemyHp -= 1;
+            this.game.sound.play('enemyhitsound');
+            var healthBarProcent = (enemyHp / enemyMaxHp);
+            this.enemyHealthbar.scale.set(healthBarProcent, 1);
+            if (enemyHp === 0) {
+                this.playerWon();
+                this.enemyHpText.setText('DEAD');
+            }
+            if (enemyHp > 0) {
+                this.enemyHpText.setText(enemyHp + '/' + enemyMaxHp);
+            }
         }
-        console.log('ENEMY HP = ' + enemyHp);
     },
 
     playerLost: function () {
         if (status === 'ACTIVE') {
-            console.log('Player LOST');
             status = 'DEFEAT';
             fightIsActive = false;
             this.drawStatusScreen();
@@ -379,7 +420,6 @@ fight.prototype = {
 
     playerWon: function () {
         if (status === 'ACTIVE') {
-            console.log('Player WON');
             status = 'WON';
             fightIsActive = false;
             this.drawStatusScreen();
@@ -471,36 +511,6 @@ fight.prototype = {
 
     mouseOut: function (button) {
         button.scale.set(1, 1);
-    },
-
-    setUpHeahtBars: function () {
-        //Making bitmap (rectangle) for healthbars
-        var healthbarBitmap = this.game.add.bitmapData(158, 25);
-        healthbarBitmap.context.fillStyle = '#cc0000';
-        healthbarBitmap.context.fillRect(0, 0, 158, 64);
-
-        //Make player healthbar
-        this.playerHealthbar = this.game.add.sprite(118, 63, healthbarBitmap);
-        UIGroup.add(this.playerHealthbar);
-
-        //Bringing the player icon to top, to cover the healthbar
-        UIGroup.bringToTop(this.playericon);
-
-        //Setup the enemy healthbar
-        this.enemyHealthbar = this.game.add.sprite(961, 63, healthbarBitmap);
-        this.enemyHealthbar.anchor.set(1, 0);
-        UIGroup.add(this.enemyHealthbar);
-
-        //Setup hpbar text style
-        var hpbarTextStyle = { font: 'Bold 22px Arial', fill: '#ffffff' };
-
-        //Add player HP text
-        this.playerHpText = this.game.add.text(this.playerHealthbar.x + this.playerHealthbar.width / 2, this.playerHealthbar.y + this.playerHealthbar.height / 2 + 3, playerHp + "/" + playerMaxHp, hpbarTextStyle);
-        this.playerHpText.anchor.set(0.5);
-
-        //Add enemy HP text
-        this.enemyHpText = this.game.add.text(this.enemyHealthbar.x - this.enemyHealthbar.width / 2, this.enemyHealthbar.y + this.enemyHealthbar.height / 2 + 3, enemyHp + "/" + enemyMaxHp, hpbarTextStyle);
-        this.enemyHpText.anchor.set(0.5);
     }
 
 
