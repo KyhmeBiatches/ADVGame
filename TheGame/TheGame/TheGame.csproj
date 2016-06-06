@@ -208,6 +208,7 @@
     <Compile Include="Startup.cs" />
   </ItemGroup>
   <ItemGroup>
+<<<<<<< HEAD
     <Content Include="App\assets\fighting\arenas\arena-1.png" />
     <Content Include="App\assets\fighting\enemy\enemy-1\enemy-1-portrait.png" />
     <Content Include="App\assets\fighting\enemy\enemy-1\enemy-1-projectile.png" />
@@ -215,9 +216,13 @@
     <Content Include="App\assets\fighting\guns\gun1\bullet.png" />
     <Content Include="App\assets\fighting\player\char_portrait.png" />
     <Content Include="App\assets\player\skeleton-animation-right.png" />
+=======
+    <Content Include="App\assets\char_all_movements_sprite.png" />
+>>>>>>> feature/CityState
     <Content Include="App\assets\map.jpg" />
     <Content Include="App\assets\skeleton-animation-left.png" />
     <Content Include="App\assets\skeleton-animation-right.png" />
+    <Content Include="App\assets\sprite.png" />
     <Content Include="App\libs\phaser.js" />
     <Content Include="App\assets\menu-background.jpg" />
     <Content Include="App\assets\Menu_Red_01.png" />
