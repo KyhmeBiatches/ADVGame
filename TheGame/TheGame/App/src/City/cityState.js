@@ -6,6 +6,8 @@ var map;
 var player;
 var background;
 var playerSprite;
+var animaRight;
+var door;
 
 var lastMovement;
 var timeForIdle = 300;
@@ -17,14 +19,14 @@ city.prototype = {
     create: function () {
         console.log("City state");
         //Enable p2 physics
-        this.game.physics.startSystem(Phaser.Physics.P2JS);
+        this.game.physics.startSystem(Phaser.Physics.ARCADE);
 
         //Turn on impact events. Without this line collision callback wont work
-        this.game.physics.p2.setImpactEvents(true);
+        //this.game.physics.p2.setImpactEvents(true);
 
         //Creating collsion gruops for the player and the doors
-        var playerCollisionGroup = this.game.physics.p2.createCollisionGroup();
-        var doorCollisionGroup = this.game.physics.p2.createCollisionGroup();
+       // var playerCollisionGroup = this.game.physics.p2.createCollisionGroup();
+        //var doorCollisionGroup = this.game.physics.p2.createCollisionGroup();
 
         //Setting up the background
         this.game.add.tileSprite(0, 0, 3240, 5760, 'map');
@@ -39,7 +41,12 @@ city.prototype = {
         animaRight = this.game.add.sprite(100, 100, 'player-right');
         animaRight.frame = 20;
      //   animaLeft = this.game.add.sprite(0, 0, 'player-left');
-       // animaLeft.frame = 20;
+        // animaLeft.frame = 20;
+
+        //Creating door
+        door = this.game.add.sprite(550, 550, 'player-front');
+        door.scale.setTo(0.2, 0.2);
+        
 
         //player for PLayer model
         player = new this.Player(animaRight);
@@ -54,12 +61,15 @@ city.prototype = {
         animaRight.animations.add('none', [0]);
         animaRight.animations.play('none', 12, false);
        // animaLeft.animations.add('left', [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]);
-        this.game.physics.p2.enable(animaRight, false);
+        this.game.physics.enable([animaRight, door], Phaser.Physics.ARCADE);
         animaRight.scale.setTo(0.6, 0.6);
         animaRight.smoothed = false;
         animaRight.body.collideWorldBounds = true;
-        animaRight.body.setRectangle(80, 120, 0, 0);
+      //  animaRight.body.setRectangle(80, 120, 0, 0);
         animaRight.body.fixedRotation = true;
+
+        animaRight.body.setSize(83, 240, 120, 60);
+
 
         //creating doors to a group
         var doors = this.game.add.group();
@@ -67,21 +77,22 @@ city.prototype = {
         doors.physicsBodyType = Phaser.Physics.P2JS;
 
         //creating and places door
-        var door = doors.create(600, 3250, 'player-back');
+       /* var door = doors.create(600, 3250, 'player-back');
         door.body.setRectangle(40, 60, 0, 0);
         door.body.debug = false;
         door.body.fixedRotation = true;
         door.scale.setTo(0.2, 0.2);
+        */
 
         //set collsion groups to bodies and tell which to collide to
-        door.body.setCollisionGroup(doorCollisionGroup);
-        door.body.collides(playerCollisionGroup);
+       // door.body.setCollisionGroup(doorCollisionGroup);
+        //door.body.collides(playerCollisionGroup);
 
-        door.body.immoveable = true;
-        door.body.moves = false;
+       // door.body.immoveable = true;
+        //door.body.moves = false;
 
-        animaRight.body.setCollisionGroup(playerCollisionGroup);
-        animaRight.body.collides(doorCollisionGroup, this.hitDoor, this);
+        //animaRight.body.setCollisionGroup(playerCollisionGroup);
+        //animaRight.body.collides(doorCollisionGroup, this.hitDoor, this);
 
 
         // this.game.world.setBounds(0, 0, 3240, 5760);
@@ -97,12 +108,18 @@ city.prototype = {
         this.rightKey = this.game.input.keyboard.addKey(Phaser.Keyboard.D);
         this.leftKey = this.game.input.keyboard.addKey(Phaser.Keyboard.A);
         this.fightStateKey = this.game.input.keyboard.addKey(Phaser.KeyCode.FIVE);
+
+
+        this.game.debug.body(door);
+        this.game.debug.body(animaRight);
     },
 
     //Gets called every time the canvas updates 60fps = 60 times a second
     update: function () {
 
-        animaRight.body.setZeroVelocity();
+        //animaRight.body.setZeroVelocity();
+
+        this.game.physics.arcade.overlap(animaRight, door, this.hitDoor);
 
         //Controll movement an player inputs
         if (this.shift.isDown) {
@@ -143,17 +160,13 @@ city.prototype = {
     },
 
 
-    hitDoor: function (body1, body2) {
-        if (!body1.hasCollided) {
+    hitDoor: function () {
             console.log("virker");
-            var enterDoorlabel = this.game.add.text(400, this.game.world.height - 220, 'press e to enter door', { font: '25px Arial', fill: '#ffffff' });
-            var ekey = this.game.input.keyboard.addKey(Phaser.Keyboard.E);
-            enterDoorlabel.fixedToCamera = true;
-            ekey.onDown.addOnce(this.shop, this);
+            //var enterDoorlabel = this.game.add.text(400, this.game.world.height - 220, 'press e to enter door', { font: '25px Arial', fill: '#ffffff' });
+           // var ekey = this.game.input.keyboard.addKey(Phaser.Keyboard.E);
+            //enterDoorlabel.fixedToCamera = true;
+            //ekey.onDown.addOnce(this.shop, this);
 
-            body1.hasCollided = true;
-        }
-        
     },
     Player: function (sprite) {
         this.walkSpeed = 300;
