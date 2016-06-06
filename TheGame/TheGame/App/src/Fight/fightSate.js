@@ -7,9 +7,11 @@ var cursors;
 var number;
 
 var player;
+var playerMaxHp;
 var playerHp;
 
 var enemy;
+var enemyMaxHp;
 var enemyHp;
 
 var fightIsActive;
@@ -30,10 +32,20 @@ fight.prototype = {
         number = 1;
         //Loads the arena/background
         this.load.image('arena-' + number, 'App/assets/fighting/arenas/arena-' + number + '.png');
+
+        //Load healthbar background
+            //For the enemy
+        this.load.image('enemyFrame', 'App/assets/fighting/utillity/enemy/enemy-frame.png');
+            //For the player
+        this.load.image('playerFrame', 'App/assets/fighting/utillity/player/player-frame.png');
+
+
         //load enemy
         this.game.load.spritesheet('enemy' + number, 'App/assets/fighting/enemy/enemy-' + number + '/enemy-' + number + '.png', 480, 550);
+            //Load bullet
         this.load.image('enemy' + number + 'bullet', 'App/assets/fighting/enemy/enemy-' + number + '/enemy-' + number + '-projectile.png');
-        this.load.image('enemy' + number + 'portrait', 'App/assets/fighting/enemy/enemy-' + number + '/enemy-' + number + '-portrait.png');
+            //Load enemy icon
+        this.load.image('enemy' + number + 'icon', 'App/assets/fighting/enemy/enemy-' + number + '/enemy-' + number + '-icon.png');
 
         //Loads player sprite sheet
         this.game.load.spritesheet('playerspritesheet', 'App/assets/player/skeleton-animation-right.png', 480, 550);
@@ -42,11 +54,22 @@ fight.prototype = {
         var gunNumber = 1;
         this.load.image('playerbullet', 'App/assets/fighting/guns/gun' + gunNumber + '/bullet.png');
 
-        //Load player portrait
-        this.load.image('playerportrait', 'App/assets/fighting/player/char_portrait.png');
+        //Load player icon
+        this.load.image('playerIcon', 'App/assets/fighting/player/player-icon.png');
 
         //Load enemy sounds
-        this.load.audio('enemy' + number + 'gunsound', 'App/assets/sounds/fighting/enemy-' + number + '/enemy-' + number + '-gunsound.wav');
+        this.load.audio('enemygunsound', 'App/assets/sounds/fighting/enemy-' + number + '/enemy-' + number + '-gunsound.wav');
+        this.load.audio('enemyhitsound', 'App/assets/sounds/fighting/enemy-' + number + '/enemy-' + number + '-hit-sound.wav');
+
+        //Load player sounds
+        this.load.audio('playerHitSound', 'App/Assets/sounds/fighting/player/player-hit-sound.wav');
+
+        //Load gun sounds
+        this.load.audio('playerFireSound', 'App/Assets/sounds/fighting/gun-' + gunNumber + '/fire-sound.wav');
+
+        //Load uttility icons
+        this.load.image('gunpowderIcon', 'App/assets/fighting/utillity/gunpowder-icon.png');
+        this.load.image('energyIcon', 'App/assets/fighting/utillity/energy-icon.png');
 
     },
     create: function () {
@@ -62,13 +85,14 @@ fight.prototype = {
 
         //Setup player HP;
         playerHp = 5;
+        playerMaxHp = playerHp;
 
         //Setup enemy HP
-        enemyHp = 5;
+        enemyHp = 10;
+        enemyMaxHp = enemyHp;
 
-        //Set the fight to being active
-        fightIsActive = true;
-        status = 'ACTIVE';
+        //Setup enemy gunpowder drop
+        this.gundpowderDrop = 10;
 
         //Create player sprite
         player = this.game.add.sprite(80, 600, 'playerspritesheet');
@@ -78,7 +102,7 @@ fight.prototype = {
 
         //Create player animations 
         player.animations.add(walkRightAnimation, [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]);
-        player.animations.add(walkLeftAnimation, [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]);
+        player.animations.add(walkLeftAnimation, [20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0]);
         player.animations.add('none', [8]);
         player.animations.play('none', 1, true);
 
@@ -90,13 +114,22 @@ fight.prototype = {
         this.game.physics.p2.setImpactEvents(true);
 
         //Setup player portrait
-        var playerportrait = this.game.add.sprite(0, 10, 'playerportrait');
-        playerportrait.anchor.set(0, 0);
-        playerportrait.scale.set(0.5);
+        var playerframe = this.game.add.sprite(-30, 0, 'playerFrame');
+        playerframe.scale.set(0.5);
+        this.playericon = this.game.add.sprite(-30, 0, 'playerIcon');
+        this.playericon.scale.set(0.5);
+        UIGroup.add(playerframe);
+        UIGroup.add(this.playericon);
+        
+
+        //Setup the healthbars
+        this.setUpHeahtBars();
 
         //Collision Groups
         this.enemyCollisionGroup = this.game.physics.p2.createCollisionGroup();
         this.playerCollisionGroup = this.game.physics.p2.createCollisionGroup();
+        this.enemyBulletsCollisionGroup = this.game.physics.p2.createCollisionGroup();
+        this.playerBulletsCollisionGroup = this.game.physics.p2.createCollisionGroup();
         this.game.physics.p2.updateBoundsCollisionGroup();
 
         //Setup the enemy
@@ -112,10 +145,6 @@ fight.prototype = {
         this.enemyBullets.enableBody = true;
         this.enemyBullets.physicsBodyType = Phaser.Physics.P2;
         this.enemyBullets.createMultiple(50, 'enemy' + number + 'bullet');
-        this.enemyBullets.setAll('checkWorldBounds', true);
-        this.enemyBullets.setAll('outOfBoundsKill', true);
-        this.enemyBullets.setAll('anchor.x', 0.5);
-        this.enemyBullets.setAll('anchor.y', 0.5);
 
         //Setup player bullets
         this.playerBullets = this.game.add.group();
@@ -124,16 +153,15 @@ fight.prototype = {
         this.playerBullets.enableBody = true;
         this.playerBullets.physicsBodyType = Phaser.Physics.P2;
         this.playerBullets.createMultiple(50, 'playerbullet');
-        this.playerBullets.setAll('checkWorldBounds', true);
-        this.playerBullets.setAll('outOfBoundsKill', true);
-        this.playerBullets.setAll('anchor.x', 0.5);
-        this.playerBullets.setAll('anchor.y', 0.5);
 
         //Setup enemy portrait
-        var enemyportrait = this.game.add.sprite(1080, 0, 'enemy' + number + 'portrait');
-        enemyportrait.anchor.set(1, 0);
-        UIGroup.add(enemyportrait);
-        enemyportrait.scale.set(0.5);
+        var enemyFrame = this.game.add.sprite(150, -10, 'enemyFrame');
+        enemyFrame.scale.set(0.5);
+        this.enemyicon = this.game.add.sprite(150, -10, 'enemy' + number + 'icon');
+        this.enemyicon.scale.set(0.5);
+        UIGroup.add(enemyFrame);
+        UIGroup.sendToBack(enemyFrame);
+        UIGroup.add(this.enemyicon);
 
         //Enable physics for sprites
         this.game.physics.p2.enable([enemy, player]);
@@ -156,8 +184,8 @@ fight.prototype = {
         player.body.setCollisionGroup(this.playerCollisionGroup);
 
         //Tell sprites to collide with collision group
-        player.body.collides(this.enemyCollisionGroup);
-        enemy.body.collides(this.playerCollisionGroup);
+        player.body.collides(this.enemyBulletsCollisionGroup);
+        enemy.body.collides(this.playerBulletsCollisionGroup);
         
 
         //Controls
@@ -167,7 +195,18 @@ fight.prototype = {
         this.downKey = this.game.input.keyboard.addKey(Phaser.Keyboard.S);
         this.rightKey = this.game.input.keyboard.addKey(Phaser.Keyboard.D);
         this.leftKey = this.game.input.keyboard.addKey(Phaser.Keyboard.A);
+
+        //Setup the jump
+        this.upKey.onDown.add(this.jump, this);
+
+        //Make sure player is on top
+        mainGroup.bringToTop(player);
+
+        //Set the fight to being active
+        fightIsActive = true;
+        status = 'ACTIVE';
     },
+
     update: function () {
         //Wraped everything in fightIsActive so we are able to stop the fight when its won or lost
         if (fightIsActive) {
@@ -185,12 +224,6 @@ fight.prototype = {
                 player.animations.play('none');
             }
 
-            if (this.upKey.isDown) {
-                player.body.moveUp(700);
-            } else if (this.downKey.isDown) {
-
-            }
-
             if (cursors.left.isDown) {
                 enemy.body.velocity.x = -100;
             } else if (cursors.right.isDown) {
@@ -199,7 +232,7 @@ fight.prototype = {
                 enemy.body.velocity.x = 0;
             }
 
-            if (cursors.down.isDown) {
+            if (this.canEnemyFire) {
                 this.enemyFire();
             }
 
@@ -207,16 +240,42 @@ fight.prototype = {
             if (this.game.input.activePointer.isDown) {
                 this.playerFire();
             }
-            //console.log('Dead = ' + this.enemyBullets.countDead());
-            //console.log('Alive = ' + this.enemyBullets.countLiving());
-            this.enemyBullets.forEachExists(function (bullet) {
-                if (bullet.y < 0 || bullet.x  < 0) {
-                    console.log(bullet.x + " " + bullet.y);
-                    bullet.destroy();
-                }
-            }, this);
         }
 
+    },
+
+    jump: function() {
+        player.body.moveUp(700);
+    },
+
+    setUpHeahtBars: function () {
+        //Making bitmap (rectangle) for healthbars
+        var healthbarBitmap = this.game.add.bitmapData(158, 25);
+        healthbarBitmap.context.fillStyle = '#cc0000';
+        healthbarBitmap.context.fillRect(0, 0, 158, 64);
+
+        //Make player healthbar
+        this.playerHealthbar = this.game.add.sprite(118, 63, healthbarBitmap);
+        UIGroup.add(this.playerHealthbar);
+
+        //Bringing the player icon to top, to cover the healthbar
+        UIGroup.bringToTop(this.playericon);
+
+        //Setup the enemy healthbar
+        this.enemyHealthbar = this.game.add.sprite(961, 63, healthbarBitmap);
+        this.enemyHealthbar.anchor.set(1, 0);
+        UIGroup.add(this.enemyHealthbar);
+
+        //Setup hpbar text style
+        var hpbarTextStyle = { font: 'Bold 22px Arial', fill: '#ffffff' };
+
+        //Add player HP text
+        this.playerHpText = this.game.add.text(this.playerHealthbar.x + this.playerHealthbar.width / 2, this.playerHealthbar.y + this.playerHealthbar.height / 2 + 3, playerHp + "/" + playerMaxHp, hpbarTextStyle);
+        this.playerHpText.anchor.set(0.5);
+
+        //Add enemy HP text
+        this.enemyHpText = this.game.add.text(this.enemyHealthbar.x - this.enemyHealthbar.width / 2, this.enemyHealthbar.y + this.enemyHealthbar.height / 2 + 3, enemyHp + "/" + enemyMaxHp, hpbarTextStyle);
+        this.enemyHpText.anchor.set(0.5);
     },
 
     enemyFire: function () {
@@ -230,11 +289,10 @@ fight.prototype = {
                 this.game.physics.p2.enable(bullet);
                 bullet.reset(enemy.x, enemy.y - 480);
 
-                this.nextEnemyFire = this.game.time.now + 1200;
-
                 bullet.anchor.set(0.5);
                 bullet.scale.set(3);
-                
+
+                mainGroup.add(bullet);
                 bullet.body.clearShapes();
                 bullet.body.addCircle(27, -27, 414);
                 bullet.body.velocity.x = 500 * Math.cos(angle);
@@ -242,19 +300,35 @@ fight.prototype = {
                 bullet.body.fixedRotation = true;
                 bullet.body.data.gravityScale = 0;
                 bullet.body.allowGravity = false;
+                bullet.body.collideWorldBounds = false;
+
                 bullet.checkWorldBounds = true;
                 bullet.outOfBoundsKill = true;
-           
-                this.game.sound.play('enemy' + number + 'gunsound');
+                bullet.autoCull = true;
+                bullet.outOfCameraBoundsKill = true;
 
-                bullet.body.setCollisionGroup(this.enemyCollisionGroup);
+                this.nextEnemyFire = this.game.time.now + 1200;
+           
+                this.game.sound.play('enemygunsound');
+
+                bullet.body.setCollisionGroup(this.enemyBulletsCollisionGroup);
                 bullet.body.removeCollisionGroup(this.enemyCollisionGroup);
                 bullet.body.collides(this.playerCollisionGroup, this.playerHit, this);
                 
 
-                bullet.body.debug = true;
+                //.body.debug = true;
             }
         }
+    },
+
+    canEnemyFire: function () {
+        var result;
+        if (this.game.time.now > this.nextEnemyFire) {
+            result = true;
+        } else {
+            result = false;
+        }
+        return result;
     },
 
     playerFire: function() {
@@ -283,39 +357,60 @@ fight.prototype = {
                 bullet.body.fixedRotation = true;
                 bullet.body.data.gravityScale = 0;
                 bullet.body.allowGravity = false;
+                bullet.body.collideWorldBounds = false;
 
-                //this.game.sound.play('playergunsound');
+                bullet.checkWorldBounds = true;
+                bullet.outOfBoundsKill = true;
+                bullet.autoCull = true;
+                bullet.outOfCameraBoundsKill = true;
 
-                bullet.body.setCollisionGroup(this.playerCollisionGroup);
+                this.game.sound.play('playerFireSound');
+
+                bullet.body.setCollisionGroup(this.playerBulletsCollisionGroup);
                 bullet.body.removeCollisionGroup(this.playerCollisionGroup);
                 bullet.body.collides(this.enemyCollisionGroup, this.enemyHit, this);
 
-                bullet.body.debug = true;
+                //bullet.body.debug = true;
             }
         }
     },
 
     playerHit: function (bullet) {
         bullet.sprite.destroy();
-        playerHp -= 1;
-        if (playerHp === 0) {
-            this.playerLost();
+        if (status === 'ACTIVE') {
+            playerHp -= 1;
+            this.game.sound.play('playerHitSound');
+            var healthBarProcent = (playerHp / playerMaxHp);
+            this.playerHealthbar.scale.set(healthBarProcent, 1);
+            if (playerHp === 0) {
+                this.playerLost();
+                this.playerHpText.setText('DEAD');
+            }
+            if (playerHp > 0) {
+                this.playerHpText.setText(playerHp + '/' + playerMaxHp);
+            }
         }
-        console.log('PLAYER HP = ' + playerHp);
     },
 
     enemyHit: function(bullet) {
         bullet.sprite.destroy();
-        enemyHp -= 1;
-        if (enemyHp === 0) {
-            this.playerWon();
+        if (status === 'ACTIVE') {
+            enemyHp -= 1;
+            this.game.sound.play('enemyhitsound');
+            var healthBarProcent = (enemyHp / enemyMaxHp);
+            this.enemyHealthbar.scale.set(healthBarProcent, 1);
+            if (enemyHp === 0) {
+                this.playerWon();
+                this.enemyHpText.setText('DEAD');
+            }
+            if (enemyHp > 0) {
+                this.enemyHpText.setText(enemyHp + '/' + enemyMaxHp);
+            }
         }
-        console.log('ENEMY HP = ' + enemyHp);
     },
 
     playerLost: function () {
         if (status === 'ACTIVE') {
-            console.log('Player LOST');
             status = 'DEFEAT';
             fightIsActive = false;
             this.drawStatusScreen();
@@ -325,7 +420,6 @@ fight.prototype = {
 
     playerWon: function () {
         if (status === 'ACTIVE') {
-            console.log('Player WON');
             status = 'WON';
             fightIsActive = false;
             this.drawStatusScreen();
@@ -335,6 +429,8 @@ fight.prototype = {
 
     drawStatusScreen: function () {
         var continueBtn;
+        var energyText;
+        var energyIcon;
         var backgroundBitmap = this.game.add.bitmapData(this.game.width / 2, this.game.height / 2);
         backgroundBitmap.context.fillStyle = '#999999';
         backgroundBitmap.context.fillRect(0, 0, this.game.width / 2, this.game.height / 2);
@@ -349,7 +445,7 @@ fight.prototype = {
 
         if (status === 'DEFEAT') {
             var enemyTaunt = 'You aint strong enough human!';
-            var enemyDefeatText = this.game.make.text(background.x, background.y - background.height / 2 + 150, enemyTaunt, { font: 'Bold 22px Arial', fill: '#ffffff' });
+            var enemyDefeatText = this.game.make.text(background.x, background.y - background.height / 2 + 100, enemyTaunt, { font: 'Bold 22px Arial', fill: '#ffffff' });
             enemyDefeatText.anchor.set(0.5);
             UIGroup.add(enemyDefeatText);
 
@@ -359,10 +455,32 @@ fight.prototype = {
             quitBtn.anchor.set(0.5);
             UIGroup.add(quitBtn);
             continueBtn = this.game.add.button(background.x, background.y + 80, 'MenuContinueButton', this.retry, this);
+
+            energyText = this.game.add.text(background.x - 100, background.y + 10, '- 1', { font: 'Bold 26px Arial', fill: '#cc0000' });
+            energyText.anchor.set(0, 0.5);
+
+            energyIcon = this.game.add.sprite(background.x + 30, background.y, 'energyIcon');
+            energyIcon.anchor.set(0.5);
+            energyIcon.scale.set(0.3);
+
         }
 
         else if (status === 'WON') {
             continueBtn = this.game.add.button(background.x, background.y + 120, 'MenuContinueButton', this.continueAfterFight, this);
+
+            var gunpowderText = this.game.add.text(background.x - 100, background.y - 40, '+ ' + this.gundpowderDrop, { font: 'Bold 26px Arial', fill: '#47d147' });
+            gunpowderText.anchor.set(0, 0.5);
+
+            var gunpowderIcon = this.game.add.sprite(background.x + 30, background.y - 50, 'gunpowderIcon');
+            gunpowderIcon.anchor.set(0.5);
+            gunpowderIcon.scale.set(0.3);
+
+            energyText = this.game.add.text(background.x - 100, background.y + 30, '- 1', { font: 'Bold 26px Arial', fill: '#cc0000' });
+            energyText.anchor.set(0, 0.5);
+
+            energyIcon = this.game.add.sprite(background.x + 30, background.y + 20, 'energyIcon');
+            energyIcon.anchor.set(0.5);
+            energyIcon.scale.set(0.3);
         }
 
         continueBtn.events.onInputOver.add(this.mouseOver, this);
