@@ -216,6 +216,7 @@
     <Content Include="App\assets\fighting\enemy\enemy-1\enemy-1.png" />
     <Content Include="App\assets\fighting\guns\gun1\bullet.png" />
     <Content Include="App\assets\fighting\player\char_portrait.png" />
+    <Content Include="App\assets\NEWMAP.jpg" />
     <Content Include="App\assets\PlayerSpriteSheet.png" />
     <Content Include="App\assets\player\skeleton-animation-right.png" />
     <Content Include="App\assets\char_all_movements_sprite.png" />

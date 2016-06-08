@@ -29,12 +29,12 @@ city.prototype = {
 
         
 
-        playerSprite = this.game.add.sprite(100, 100, 'player-right');
+        playerSprite = this.game.add.sprite(1400, 3600, 'player-right');
         playerSprite.frame = 41;
 
         //Creating door
-        door = this.game.add.sprite(550, 550, 'player-front');
-        door.scale.setTo(0.2, 0.2);
+        door = this.game.add.sprite(1780, 3600, 'player-front');
+        door.scale.setTo(0.6, 0.6);
         
 
         //player for PLayer model
@@ -55,7 +55,7 @@ city.prototype = {
 
         this.hitDoor = function () {
             console.log('Her nu');
-            this.state.start('Fight');
+            //this.state.start('Fight');
         }
 
 
@@ -72,8 +72,6 @@ city.prototype = {
         this.fightStateKey = this.game.input.keyboard.addKey(Phaser.KeyCode.FIVE);
 
 
-        this.game.debug.body(door);
-        this.game.debug.body(playerSprite);
     },
 
     //Gets called every time the canvas updates 60fps = 60 times a second

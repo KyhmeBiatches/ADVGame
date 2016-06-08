@@ -34,7 +34,7 @@ preload.prototype = {
         this.game.load.spritesheet('player-left', '/App/assets/skeleton-animation-left.png', 480, 550);
 
         //Loading everything for the city
-        this.game.load.image('map', '/App/assets/map.jpg');
+        this.game.load.image('map', '/App/assets/NEWMAP.jpg');
     },
     create: function() {
         this.state.start('Menu');
