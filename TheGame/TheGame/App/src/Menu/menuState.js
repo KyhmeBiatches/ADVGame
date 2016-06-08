@@ -49,7 +49,7 @@ menu.prototype = {
         this.game.sound.play('StartGameSound');
         
         //Chages the game state to City, since thats the main stage of the game
-        this.state.start('Fight');
+        this.state.start('City');
     },
 
     loadGame: function () {

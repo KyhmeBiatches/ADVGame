@@ -30,7 +30,7 @@ preload.prototype = {
       //  this.load.image('player-right', '/App/assets/player/right-view-char.png');
         this.load.image('player-left', '/App/assets/player/left-view-char.png');
 
-        this.game.load.spritesheet('player-right', '/App/assets/skeleton-animation-right.png', 480, 550);
+        this.game.load.spritesheet('player-right', '/App/assets/PlayerSpriteSheet.png', 480, 550);
         this.game.load.spritesheet('player-left', '/App/assets/skeleton-animation-left.png', 480, 550);
 
         //Loading everything for the city

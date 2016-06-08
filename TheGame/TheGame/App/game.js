@@ -11,4 +11,4 @@ main.game.state.add('City', city);
 main.game.state.add('Shop', shop);
 
 //starting preload
-main.game.state.start('Preload');
+main.game.state.start('Preload');   
