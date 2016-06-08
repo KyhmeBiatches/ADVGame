@@ -138,6 +138,10 @@ fight.prototype = {
         enemy.scale.set(1);
         mainGroup.add(enemy);
 
+        //Create enemy animations
+        enemy.animations.add('idle', [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 18, 19, 20]);
+        enemy.animations.play('idle', 10, true);
+
         //Setup enemy bullets
         this.enemyBullets = this.game.add.group();
         this.nextEnemyFire = 0;
@@ -402,6 +406,7 @@ fight.prototype = {
             if (enemyHp === 0) {
                 this.playerWon();
                 this.enemyHpText.setText('DEAD');
+                enemy.animations.stop(null, true);
             }
             if (enemyHp > 0) {
                 this.enemyHpText.setText(enemyHp + '/' + enemyMaxHp);
@@ -491,7 +496,7 @@ fight.prototype = {
 
     continueAfterFight: function() {
         this.game.sound.play('StartGameSound');
-        //this.game.state.start('City');
+        this.game.state.start('City');
     },
 
     quitAfterLoose: function () {
